@@ -1,5 +1,7 @@
  package net.paragon.msp.i18n;
 
+import org.springframework.stereotype.Component;
+
 /**
  * Adds support for UTF-8 based bundles for admin i18n messages
  * 
@@ -7,6 +9,7 @@
  *
  * @author rafael-pestano
  */
+ @Component
 public class CustomResourceBundle extends MultiplePropertiesResourceBundle {
 
     protected static final String BUNDLE_NAME = "admin";
@@ -16,7 +19,7 @@ public class CustomResourceBundle extends MultiplePropertiesResourceBundle {
     public CustomResourceBundle() {
     	//super("i18n/*." + BUNDLE_EXTENSION);
     	//super("net.paragon.resources.i18n", "*.properties");//ok. Fine
-    	super(new String[] {"i18n.admin", "i18n.general"}, 
+    	super(new String[] {"i18n", "i18n.admin", "i18n.general"}, 
     			"*.properties");//ok. Fine
     }
 }

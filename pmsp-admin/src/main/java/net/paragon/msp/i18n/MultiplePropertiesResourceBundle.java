@@ -6,6 +6,7 @@ package net.paragon.msp.i18n;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,11 +22,13 @@ import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.faces.context.FacesContext;
+import javax.inject.Inject;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 
+import net.paragon.config.service.ConfigurationService;
 import net.paragon.msp.global.GlobalDataRepository;
 import net.paragon.utility.CommonUtility;
 import net.paragon.utility.ListUtility;
@@ -129,7 +132,7 @@ public abstract class MultiplePropertiesResourceBundle extends ResourceBundle {
 	 * A Map containing the combined resources of all parts building this
 	 * MultiplePropertiesResourceBundle.
 	 */
-	private Map<String, Object> combined;
+	private Map<String, Object> mappedMessages = null;
 
 	/**
 	 * Construct a <code>MultiplePropertiesResourceBundle</code> for the passed in base-name.
@@ -176,14 +179,14 @@ public abstract class MultiplePropertiesResourceBundle extends ResourceBundle {
 			throw new NullPointerException();
 		}
 		loadBundlesOnce();
-		return combined.get(key);
+		return mappedMessages.get(key);
 	}
 
 	@Override
 	public Enumeration<String> getKeys() {
 		loadBundlesOnce();
 		ResourceBundle parent = this.parent;
-		return new ResourceBundleEnumeration(combined.keySet(), (parent != null) ? parent.getKeys()
+		return new ResourceBundleEnumeration(mappedMessages.keySet(), (parent != null) ? parent.getKeys()
 				: null);
 	}
 
@@ -191,21 +194,31 @@ public abstract class MultiplePropertiesResourceBundle extends ResourceBundle {
 	 * Load the resources once.
 	 */
 	private void loadBundlesOnce() {
-		if (combined == null || combined.isEmpty()) {
-			combined = new HashMap<String, Object>(128);
+		if (CommonUtility.isNotEmpty(mappedMessages)) {
+			return;
+		}
 
-			String currentLocaleInfo = this.locale.toString();
-			List<String> bundleNames = findBaseNames(baseName);
-			for (String bundleName : bundleNames) {
-				if (!bundleName.contains(currentLocaleInfo))
-					continue;
+		this.mappedMessages = new HashMap<String, Object>(128);
 
-				ResourceBundle bundle = ResourceBundle.getBundle(bundleName, this.locale);
-				Enumeration<String> keys = bundle.getKeys();
-				String key = null;
-				while (keys.hasMoreElements()) {
-					key = keys.nextElement();
-					combined.put(key, bundle.getObject(key));
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(classLoader);
+		this.loadAdditionalClassPathProperties(resolver);
+
+		ResourceBundle bundle = null;
+		Enumeration<String> keys = null;
+		String key = null;
+		String currentLocaleInfo = this.locale.toString();
+		List<String> bundleNames = findBaseNames(baseName);
+		for (String bundleName : bundleNames) {
+			if (!bundleName.contains(currentLocaleInfo))
+				continue;
+
+			bundle = ResourceBundle.getBundle(bundleName, this.locale);
+			keys = bundle.getKeys();
+			while (keys.hasMoreElements()) {
+				key = keys.nextElement();
+				if (!mappedMessages.containsKey(key)) {
+					mappedMessages.put(key, bundle.getObject(key));
 				}
 			}
 		}
@@ -220,6 +233,7 @@ public abstract class MultiplePropertiesResourceBundle extends ResourceBundle {
 	 * @return a List with the real base-names.
 	 */
 	private List<String> findBaseNames(final String baseName) {
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		if (baseName.contains("*"))
 			return findCustomBaseNames(baseName);
 
@@ -233,7 +247,6 @@ public abstract class MultiplePropertiesResourceBundle extends ResourceBundle {
 		final String METHOD = "findBaseNames";
 		boolean isLoggable = LOG.isLoggable(Level.FINE);
 
-		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		List<String> bundleNames = new ArrayList<String>();
 		try {
 			String baseFileName = baseName + ".properties";
@@ -243,7 +256,7 @@ public abstract class MultiplePropertiesResourceBundle extends ResourceBundle {
 				LOG.logp(Level.FINE, CLASS, METHOD, "Looking for files named '" + resourceName + "'");
 			}
 
-			Enumeration<URL> names = cl.getResources(resourceName);
+			Enumeration<URL> names = classLoader.getResources(resourceName);
 			while (names.hasMoreElements()) {
 				jarUrl = names.nextElement();
 				if (isLoggable) {
@@ -366,6 +379,42 @@ public abstract class MultiplePropertiesResourceBundle extends ResourceBundle {
 		return bundleNames;
 	}
 
+	private void loadAdditionalClassPathProperties(ResourcePatternResolver resolver) {
+		final String PROPERTIES_SUFFIX = ".properties";
+		ClassLoader classLoader = null;
+		ResourceBundle resourceBundle = null;
+		//PathMatchingResourcePatternResolver innerResolver = null;
+		try {
+			List<String> scannedResources = ListUtility.createArrayList();
+			Resource[] resources = resolver.getResources(PathMatchingResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX);
+			//Resource[] innerResources = null;
+			for (Resource resource : resources) {
+				if (!(resource.getFilename().endsWith(PROPERTIES_SUFFIX) || resource.getURL().getPath().contains(".jar"))) {
+					try {
+						classLoader = new URLClassLoader(new URL[] {resource.getURL()});
+						//innerResolver = new PathMatchingResourcePatternResolver(classLoader);
+						//innerResources = innerResolver.getResources(resource.getURL().getPath()+"i18n/");
+						//resourceBundle = ResourceBundle.getBundle("i18n/messagesEMX", this.locale, classLoader);
+						resourceBundle = ResourceBundle.getBundle("i18n/messages", this.locale, classLoader);
+						if (resourceBundle.keySet().size() > 0 && !scannedResources.contains(resourceBundle.getBaseBundleName())) {
+							scannedResources.add(resourceBundle.getBaseBundleName());
+							for (String key :resourceBundle.keySet()) {
+								if (!this.mappedMessages.containsKey(key)) {
+									this.mappedMessages.put(key, resourceBundle.getString(key));
+								} /*else {
+									System.out.println("Key: " + key + ". PARK!");
+								}*/
+							}
+						}
+					} catch (Exception e) {
+					}
+				}
+			}
+		} catch (IOException ignored) {
+			ignored.printStackTrace();
+		}
+	}
+	
 	private List<String> getResourceBundleNames(PathMatchingResourcePatternResolver resolver, String resourcePath, String resourceName) throws IOException{
 		List<String> resourceBundleNames = ListUtility.createArrayList();
 		Resource[] resources = resolver.getResources(resourceName);

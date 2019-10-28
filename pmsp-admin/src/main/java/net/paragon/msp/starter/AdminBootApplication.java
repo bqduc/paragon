@@ -23,7 +23,9 @@ import javax.inject.Inject;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import net.paragon.config.manager.ConfigurationManager;
 import net.paragon.entity.Car;
 import net.paragon.msp.config.BaseConfiguration;
 import net.paragon.msp.config.SecurityConfig;
@@ -36,15 +38,19 @@ import net.paragon.msp.util.Utils;
 @Import(value = { 
 		BaseConfiguration.class, 
 		SecurityConfig.class, 
-		SpringInternationalizationConfig.class})
+		SpringInternationalizationConfig.class }
+)
 @SpringBootApplication
-public class AdminBootApplication {
+public class AdminBootApplication implements WebMvcConfigurer {
 	@Inject
 	private Utils utils;
 
-    @Bean
-    public List<Car> getCars() {
-        return utils.getCars();
-    }
-	
+	@Inject
+	protected ConfigurationManager configurationManager;
+
+	@Bean
+	public List<Car> getCars() {
+		return utils.getCars();
+	}
+
 }

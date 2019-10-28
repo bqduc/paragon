@@ -3,11 +3,14 @@
  */
 package net.paragon.msp.config;
 
-import java.util.Locale;
+import java.util.Collections;
+import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.autoconfigure.web.servlet.WebMvcProperties.LocaleResolver;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.HierarchicalMessageSource;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -46,6 +49,35 @@ public class BaseConfiguration {
 	public PasswordEncoder passwordEncoder() {
 	    return new BCryptPasswordEncoder();
 	}
+	/*
+  @Autowired(required = false)
+  @Qualifier("external")
+  private List<HierarchicalMessageSource> externalMessageSources = Collections.emptyList();
+
+  @Bean
+	public MessageSource messageSource() {
+	    ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
+	    messageSource.setBasename("classpath:messages");
+	    messageSource.setCacheSeconds(10); //reload messages every 10 seconds
+	    
+    ReloadableResourceBundleMessageSource rootMessageSource = new ReloadableResourceBundleMessageSource();
+    rootMessageSource.setBasenames("classpath:messages");
+
+    if (externalMessageSources.isEmpty()) {
+        // No external message sources found, just main message source will be used
+        return rootMessageSource;
+    }
+    else {
+        // Wiring detected external message sources, putting main message source as "last resort"
+        int count = externalMessageSources.size();
+
+        for (int i = 0; i < count; i++) {
+            HierarchicalMessageSource current = externalMessageSources.get(i);
+            current.setParentMessageSource( i == count - 1 ? rootMessageSource : externalMessageSources.get(i + 1) );
+        }
+        return externalMessageSources.get(0);
+    }
+	}	*/
 	/*
 	@Bean
 	  public MessageSource messageSource() {

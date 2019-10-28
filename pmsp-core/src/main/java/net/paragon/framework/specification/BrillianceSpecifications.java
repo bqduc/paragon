@@ -1,7 +1,7 @@
 /**
  * 
  */
-/*package net.sunrise.framework.specifications;
+package net.paragon.framework.specification;
 
 import java.util.List;
 
@@ -12,18 +12,18 @@ import javax.persistence.criteria.Root;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import net.sunrise.common.CommonUtility;
-import net.sunrise.common.ListUtility;
-import net.sunrise.framework.model.SearchParameter;
+import net.paragon.framework.model.SearchParameter;
+import net.paragon.utility.CommonUtility;
+import net.paragon.utility.ListUtility;
 
-*//**
+/**
  * @author bqduc
  *
- *//*
+ */
 public abstract class BrillianceSpecifications<CustomUserType, CustomUserRequest> extends BaseSpecification<CustomUserType, CustomUserRequest>{
-	*//**
+	/**
 	 * 
-	 *//*
+	 */
 	private static final long serialVersionUID = 1L;
 
 	@Override
@@ -33,16 +33,16 @@ public abstract class BrillianceSpecifications<CustomUserType, CustomUserRequest
 
 	protected Specification<CustomUserType> buildSpecifications(final SearchParameter searchParameter){
 		return new Specification<CustomUserType>() {
-			*//**
+			/**
 			 * 
-			 *//*
+			 */
 			private static final long serialVersionUID = 369798785793130829L;
 
 			@Override
 			public Predicate toPredicate(Root<CustomUserType> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
-				if (CommonUtility.isEmpty(searchParameter.getParameterMap())) {
+				/*if (CommonUtility.isEmpty(searchParameter.getParameterMap())) {
 					throw new IllegalStateException("At least one parameter should be provided to construct complex query");
-				}
+				}*/
 
 				Predicate[] predicatesArray = null;
 				Object searchValue = null;
@@ -66,7 +66,7 @@ public abstract class BrillianceSpecifications<CustomUserType, CustomUserRequest
 		};
 	}
 
-	private List<Predicate> buildPredicates(final SearchCriteria searchCriteria, Root<CustomUserType> root, CriteriaBuilder builder){
+	/*private List<Predicate> buildPredicates(final SearchCriteria searchCriteria, Root<CustomUserType> root, CriteriaBuilder builder){
 		List<Predicate> predicates = ListUtility.createArrayList();
 		for(SearchCriterion searchCriterion :searchCriteria.getSearchParameters()){
 			if (SearchOperand.equal.equals(searchCriterion.getOperand())){
@@ -78,9 +78,9 @@ public abstract class BrillianceSpecifications<CustomUserType, CustomUserRequest
 			}
 		}
 		return predicates;
-	}
+	}*/
 
 	public Specification<CustomUserType> buildRepoSpecification(final SearchParameter searchParameter) {
 		return this.buildSpecifications(searchParameter);
 	}
-}*/
+}

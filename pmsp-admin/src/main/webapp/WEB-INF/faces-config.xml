@@ -10,7 +10,7 @@
             <supported-locale>en</supported-locale>
         </locale-config>
 
-				<view-handler>net.paragon.msp.handlers.DefaultViewHandler</view-handler>
+				<!-- <view-handler>net.paragon.msp.handlers.DefaultViewHandler</view-handler> -->
         <resource-bundle>
 					<base-name>net.paragon.msp.i18n.CustomResourceBundle</base-name>
           <var>messages</var>
